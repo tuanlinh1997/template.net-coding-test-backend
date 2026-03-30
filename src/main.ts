@@ -15,12 +15,12 @@ import { TransformInterceptor } from './core/interceptors/transform.response.int
 
 const CORS_OPTIONS = {
     origin: '*',
-    methods: 'GET,HEAD,PUT,PATCH,POST,DELETE',
+    methods: 'GET,HEAD,PUT,PATCH,POST,DELETE,OPTIONS',
     preflightContinue: false,
     optionsSuccessStatus: 204,
     credentials: false,
     exposedHeaders: null,
-    allowedHeaders: null,
+    allowedHeaders: '*',
     maxAge: null,
     preflight: true,
     strictPreflight: true,
@@ -28,7 +28,6 @@ const CORS_OPTIONS = {
 
 async function bootstrap() {
     const app = await NestFactory.create<NestFastifyApplication>(AppModule, new FastifyAdapter({ bodyLimit: 52428800, trustProxy: true }));
-
     const configService = app.get(ConfigService);
     app.useGlobalPipes(new ValidationPipe());
     app.setGlobalPrefix(configService.get<string>('baseUrl'));

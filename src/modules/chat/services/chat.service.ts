@@ -88,8 +88,10 @@ export class ChatService implements IChatService {
             // }
 
             const result = await this.model.generateContent(content);
+           
+            
             const reply = result.response.text();
-
+            console.log("AI response", reply);
             const chunks = reply.match(/.{1,50}/g) || [];
             for (const chunk of chunks) {
                 await new Promise((r) => setTimeout(r, 100)); // giả lập delay

@@ -3,5 +3,5 @@ import { IsNotEmpty, IsString } from 'class-validator';
 export class CreateMessageDto {
     @IsNotEmpty()
     @IsString()
-    userMessage: string;
+    message: string;
 }
