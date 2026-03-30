@@ -1,0 +1,19 @@
+Dockerfile
+.dockerignore
+.git
+.gitignore
+node_modules
+dist
+.env.pilot
+.env
+.env.dev
+.env.local
+deploy
+public/cache
+public/logs
+public/static
+# src
+test
+logs
+yarn.lock
+bash-script

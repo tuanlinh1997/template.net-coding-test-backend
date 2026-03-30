@@ -1,0 +1,21 @@
+{
+    "editor.formatOnSave": false,
+    "editor.defaultFormatter": "esbenp.prettier-vscode",
+    "editor.codeActionsOnSave": {
+      "source.fixAll.eslint": "explicit"
+    },
+    "editor.tabSize": 2,
+    "[javascript]": {
+      "editor.tabSize": 4
+    },
+    "[typescript]": {
+      "editor.tabSize": 4,
+      "editor.defaultFormatter": "esbenp.prettier-vscode"
+    },
+    "editor.detectIndentation": false,
+    "typescript.preferences.importModuleSpecifier": "relative",
+    "yaml.schemas": {
+      "https://www.artillery.io/schema.json": []
+    }
+}
+    

@@ -1,0 +1,73 @@
+import { ArgumentsHost, Catch, ExceptionFilter, HttpException, HttpStatus } from '@nestjs/common';
+import { LoggerService } from '../logger/logger.custom';
+import { HttpArgumentsHost } from '@nestjs/common/interfaces/features/arguments-host.interface';
+import { Response } from 'express';
+import { QueryFailedError } from 'typeorm';
+
+@Catch()
+export class AllExceptionFilter implements ExceptionFilter {
+    constructor(private logger: LoggerService) {}
+
+    private static handleResponse(response: Response, exception: HttpException | QueryFailedError | Error): void {
+        let responseBody: any = { message: 'Internal server error' };
+        let statusCode = HttpStatus.INTERNAL_SERVER_ERROR;
+
+        if (exception instanceof HttpException) {
+            console.log('🚀 ~ file: exception.filter.js exception instanceof HttpException');
+            responseBody = exception.getResponse();
+            statusCode = exception.getStatus();
+        } else if (exception instanceof QueryFailedError) {
+            console.log('🚀 ~ file: exception.filter.js exception instanceof QueryFailedError');
+            statusCode = HttpStatus.BAD_REQUEST;
+            responseBody = {
+                statusCode: statusCode,
+                message: exception.message,
+            };
+        } else if (exception instanceof Error) {
+            // console.log('🚀 ~ file: exception.filter.js exception instanceof Error');
+            responseBody = {
+                statusCode: statusCode,
+                message: exception.stack,
+            };
+        }
+
+        response.status(statusCode).send({
+            status: statusCode,
+            result: responseBody.result ?? 0,
+            message: responseBody.message ?? responseBody,
+            data: null,
+            error: exception,
+        });
+    }
+
+    catch(exception: HttpException | Error, host: ArgumentsHost): void {
+        const ctx: HttpArgumentsHost = host.switchToHttp();
+        const response: Response = ctx.getResponse();
+
+        // Handling error message and logging
+        // this.handleMessage(exception);
+        const resRaw = (response as any).raw;
+        if (resRaw && !resRaw.writableEnded) {
+            // Gửi SSE error
+            resRaw.write(`event: error\n`);
+            resRaw.write(`data: ${exception.message || 'Internal Server Error'}\n\n`);
+            resRaw.end();
+        } else if (!response.headersSent) {
+            AllExceptionFilter.handleResponse(response, exception);
+        } else {
+            console.error('Cannot send response, headers already sent');
+        }
+    }
+
+    private handleMessage(): void {
+        // let message = 'Internal Server Error';
+        // if (exception instanceof HttpException) {
+        //     message = JSON.stringify(exception.getResponse());
+        // } else if (exception instanceof QueryFailedError) {
+        //     message = exception.stack.toString();
+        // } else if (exception instanceof Error) {
+        //     message = exception.stack.toString();
+        // }
+        // this.logger.error(message);
+    }
+}

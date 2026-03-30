@@ -1,0 +1,25 @@
+stages:
+  - deploy_stage
+  - deploy_prod
+deploy-stage:
+  stage: deploy_stage
+  tags:
+    - srvstage-htv-cms-95-runner
+  only:
+    - stage
+  script:
+    - chmod +x ./bash/stage.sh
+    - ./bash/stage.sh
+deploy-prod:
+  stage: deploy_prod
+  tags: 
+      - srv-upcode-runner-tag
+  only: 
+      - prod
+  script:
+      - chmod +x ./bash/prod.sh
+      - ./bash/prod.sh
+  when: manual
+
+
+

@@ -1,0 +1,14 @@
+version: '3.4'
+services:
+  app:
+    image: api-smart-cms
+    ports:
+      - "5070:5070"
+    restart: unless-stopped
+    volumes:
+      - /home/source/smartcms/api/public/cache:/var/www/api_smart_cms/public/cache
+      - /home/source/smartcms/api/public/logs:/var/www/api_smart_cms/public/logs
+      - /home/source/smartcms/api/public/static:/var/www/api_smart_cms/public/static
+      - /home/source/smartcms/api/logs:/var/www/api_smart_cms/logs
+      - .env.staging:/var/www/api_smart_cms/.env
+    container_name: api_smart_cms

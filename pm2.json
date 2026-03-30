@@ -1,0 +1,27 @@
+{
+  "apps": [
+      {
+          "name": "api-smart-cms-htv",
+          "script": "./dist/main.js",
+          "cwd": "/home/htv/smartcms/backend/",
+          "max_memory_restart": "4G",
+          "out_file": "/home/htv/smartcms/backend/logs/log.log",
+          "error_file": "/home/htv/smartcms/backend/errors/error.log",
+          "time": true,
+          "log_rotate_interval": "1h",
+          "log_max_size": "10M",
+          "env_dev": {
+              "NODE_ENV": "dev"
+          },
+          "env_staging": {
+              "NODE_ENV": "staging"
+          },
+          "env_production": {
+              "NODE_ENV": "production"
+          },
+          "env_pilot": {
+              "NODE_ENV": "pilot"
+          }
+      }
+  ]
+}
