@@ -12,7 +12,7 @@
    - `yarn install`
 3. Kiem tra/cap nhat bien moi truong `OPENAI_API_KEY` (Gemini) trong file `.env.local` neu key het han.
 4. Chay project:
-   - `yarn start:dev`
+   - `yarn start:local`
 
 ## Ghi chu
 - Neu database da duoc chay truoc do, ban co the bo qua buoc `docker-compose up -d`.
