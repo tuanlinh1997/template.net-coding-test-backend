@@ -1,4 +1,4 @@
-import { Inject, Injectable, NotFoundException } from '@nestjs/common';
+import { BadRequestException, Inject, Injectable, NotFoundException } from '@nestjs/common';
 import { ChatEntity } from '../entities/chat.entity';
 import { IChatRepository } from '../repositories/ichat.repository';
 import { formatDateTime } from '../../../core/helpers/datetime.helper';
@@ -7,6 +7,10 @@ import { IMessageRepository } from '../repositories/imessage.repository';
 import { IChatService } from './ichat.service';
 import { config } from '../../../config/config';
 import { GoogleGenerativeAI } from '@google/generative-ai';
+
+interface UploadedChatFile {
+    image_url: string;
+}
 
 @Injectable()
 export class ChatService implements IChatService {
@@ -39,35 +43,60 @@ export class ChatService implements IChatService {
         return chat;
     }
 
-    async getMessages(chatId: number, page: number, limit: number): Promise<{ item: MessageEntity[]; total: number }> {
+    async getMessages(chatId: number, page: number, limit: number): Promise<{ items: MessageEntity[]; total: number }> {
         try {
             const [messages, total] = await this.messageRepository.findAndCount(chatId, page, limit);
-            return { item: messages, total };
+            return { items: messages, total };
         } catch (error) {
             throw error;
         }
     }
 
-    async createMessage(chatId: number, content: string): Promise<MessageEntity> {
-        try {
-            const chat = await this.chatRepository.findOne({ where: { id: chatId } });
-            if (!chat) {
-                throw new NotFoundException('Chat not found');
-            }
-            const message = await this.messageRepository.store({
+    async createMessage(chatId: number, content: string, sender: string = 'user', fileUpload?: UploadedChatFile ): Promise<MessageEntity> {
+        const chat = await this.chatRepository.findOne({ where: { id: chatId } });
+        if (!chat) {
+            throw new NotFoundException('Chat not found');
+        }
+
+        const trimmedContent: string = content?.trim() ?? '';
+        const hasTextContent: boolean = trimmedContent.length > 0;
+        const hasFileUpload: boolean = Boolean(fileUpload?.image_url);
+
+        if (!hasTextContent && !hasFileUpload) {
+            throw new BadRequestException('Message content or file is required');
+        }
+
+        const createdAt: string = formatDateTime('YYYY-MM-DD HH:mm:ss');
+        let latestMessage: MessageEntity | null = null;
+
+        if (hasFileUpload) {
+            latestMessage = await this.messageRepository.store({
                 chat,
-                content,
-                sender: 'user',
-                type: 'text',
-                created_at: formatDateTime('YYYY-MM-DD HH:mm:ss'),
+                content: fileUpload.image_url,
+                sender: sender,
+                type: 'file',
+                created_at: createdAt,
             });
-            return message;
-        } catch (error) {
-            throw error;
         }
+
+        if (hasTextContent) {
+            latestMessage = await this.messageRepository.store({
+                chat,
+                content: trimmedContent,
+                sender: sender,
+                type: 'text',
+                created_at: createdAt,
+            });
+        }
+
+        if (!latestMessage) {
+            throw new BadRequestException('Could not create message');
+        }
+
+        return latestMessage;
     }
 
-    async streamAIResponse(chatId: number, content: string, callback: (chunk: string) => void) {
+    async streamAIResponse(chatId: number, content: string): Promise<string> {
         try {
             const chat = await this.chatRepository.findOne({ where: { id: chatId } });
             if (!chat) {
@@ -88,15 +117,9 @@ export class ChatService implements IChatService {
             // }
 
             const result = await this.model.generateContent(content);
-           
-            
+
             const reply = result.response.text();
-            console.log("AI response", reply);
-            const chunks = reply.match(/.{1,50}/g) || [];
-            for (const chunk of chunks) {
-                await new Promise((r) => setTimeout(r, 100)); // giả lập delay
-                callback(chunk);
-            }
+
             await this.messageRepository.store({
                 chatId,
                 content: reply,
@@ -104,6 +127,7 @@ export class ChatService implements IChatService {
                 type: 'text',
                 created_at: formatDateTime('YYYY-MM-DD HH:mm:ss'),
             });
+            return reply;
         } catch (error) {
             throw error;
         }

@@ -13,7 +13,7 @@ interface FilesMapper {
 
 export const fileMapper = ({ file }: FileMapper) => {
     const updatedPath = file.destination.replace('./public/', '');
-    const image_url = `${config().domain_api}/api/v1/cms-api/${updatedPath}/${file.filename}`;
+    const image_url = `${config().domain_api}api/v1/template-net/${updatedPath}/${file.filename}`;
     return {
         originalname: file.originalname,
         filename: file.filename,

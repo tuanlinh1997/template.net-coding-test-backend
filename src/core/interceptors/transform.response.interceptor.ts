@@ -11,23 +11,29 @@ export interface Response<T> {
 }
 
 @Injectable()
-export class TransformInterceptor<T> implements NestInterceptor<T, Response<T>> {
-    intercept(context: ExecutionContext, next: CallHandler): Observable<Response<T>> {
+export class TransformInterceptor<T> implements NestInterceptor<T, Response<T> | unknown> {
+    intercept(context: ExecutionContext, next: CallHandler): Observable<Response<T> | unknown> {
         const httpContext = context.switchToHttp();
         const response = httpContext.getResponse();
         if (response && response.status) {
             return next.handle().pipe(
                 map((data) => {
-                    response.status(data?.status);
-                    if (response) {
-                        return {
-                            status: data?.status,
-                            result: data.result || 0,
-                            message: data.message || 'Success',
-                            data: data.data,
-                            error: data.errors || null,
-                        };
-                    }
+                    // If the handler returns a non-object (example: plain text),
+                    // don't wrap it into the ApiResponse shape.
+                    if (data === null || data === undefined) return data;
+                    if (typeof data !== 'object') return data;
+
+                    const statusValue: unknown = (data as { status?: unknown })?.status;
+                    if (typeof statusValue !== 'number') return data;
+
+                    response.status(statusValue);
+                    return {
+                        status: (data as { status: number })?.status,
+                        result: (data as { result?: number }).result || 0,
+                        message: (data as { message?: string }).message || 'Success',
+                        data: (data as { data?: unknown }).data,
+                        error: (data as { errors?: unknown }).errors || null,
+                    };
                 }),
             );
         } else {
